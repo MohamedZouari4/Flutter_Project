@@ -1,8 +1,13 @@
+// File: lib/Screens/login_screen.dart
+// Login screen handling local credential storage for demo purposes.
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/hive_service.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 
+/// Allows user to sign in using locally stored demo credentials.
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -15,8 +20,24 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
+  /// Attempts to log the user in and stores minimal session info.
+  /// Attempts to sign-in the user by validating the form and saving session values.
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
+      // Authenticate against Hive-backed users
+      final user = await HiveService().authenticate(
+        _emailController.text,
+        _passwordController.text,
+      );
+
+      if (user == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Invalid email or password')));
+        return;
+      }
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('userEmail', _emailController.text);
@@ -38,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _loadSavedEmail();
   }
 
+  /// Loads a previously saved email into the login form when "Remember me" was used.
   Future<void> _loadSavedEmail() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString('savedEmail');
@@ -257,6 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// Button used to represent a third-party social login option (placeholder).
   Widget _buildSocialButton(String label, Color color) {
     return GestureDetector(
       onTap: () {},

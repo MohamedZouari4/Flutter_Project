@@ -1,6 +1,10 @@
+// File: lib/Screens/onboarding_screen.dart
+// Multi-page onboarding that introduces the app to new users.
+
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 
+/// Onboarding flow presenting several feature highlights.
 class OnboardingScreen extends StatefulWidget {
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();

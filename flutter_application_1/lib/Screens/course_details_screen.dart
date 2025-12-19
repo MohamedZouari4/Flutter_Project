@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/course.dart';
-import '../services/database_service.dart';
+import '../services/hive_service.dart';
 import '../widgets/course_card.dart';
 
+/// Details screen for a single [Course].
 class CourseDetailsScreen extends StatefulWidget {
   final Course course;
 
@@ -15,7 +16,8 @@ class CourseDetailsScreen extends StatefulWidget {
 class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   bool _isEnrolled = false;
   bool _isSaved = false;
-  final DatabaseService _db = DatabaseService();
+  // Use Hive-backed service for data persistence
+  final HiveService _db = HiveService();
   List<Course> _related = [];
 
   @override
@@ -24,6 +26,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     _loadRelated();
   }
 
+  /// Loads related courses from the database excluding the current one.
   Future<void> _loadRelated() async {
     final all = await _db.getCourses();
     setState(() {
@@ -233,8 +236,9 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   // Enroll Button
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
+                    child: ElevatedButton(
                       onPressed: () {
+                        // Toggle enrollment state and show a confirmation toast
                         setState(() => _isEnrolled = !_isEnrolled);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -247,11 +251,45 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                           ),
                         );
                       },
-                      icon: Icon(_isEnrolled ? Icons.check : Icons.add),
-                      label: Text(_isEnrolled ? 'Enrolled' : 'Enroll Now'),
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: _isEnrolled ? Colors.green : primary,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isEnrolled ? Icons.check : Icons.add,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 8),
+                          // When not enrolled, color only the word 'Enroll' differently
+                          if (_isEnrolled)
+                            Text(
+                              'Enrolled',
+                              style: TextStyle(color: Colors.white),
+                            )
+                          else
+                            RichText(
+                              text: TextSpan(
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: 'Enroll',
+                                    style: TextStyle(
+                                      color: Colors.amberAccent,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  TextSpan(text: ' Now'),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -261,31 +299,150 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   // Related Courses
                   if (_related.isNotEmpty) ...[
                     SizedBox(height: 8),
-                    Text(
-                      'Related Courses',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Related Courses',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('See all not implemented'),
+                                  ),
+                                ),
+                            child: Text('See all'),
+                          ),
+                        ],
                       ),
                     ),
                     SizedBox(height: 12),
                     SizedBox(
                       height: 180,
                       child: ListView.separated(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
                         scrollDirection: Axis.horizontal,
                         itemCount: _related.length,
                         separatorBuilder: (_, __) => SizedBox(width: 12),
                         itemBuilder: (context, idx) {
                           final c = _related[idx];
-                          return SizedBox(
-                            width: 260,
-                            child: CourseCard(
-                              course: c,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      CourseDetailsScreen(course: c),
-                                ),
+                          return GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CourseDetailsScreen(course: c),
+                              ),
+                            ),
+                            child: Container(
+                              width: 180,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Stack(
+                                      children: [
+                                        Positioned.fill(
+                                          child: Image.network(
+                                            c.imageUrl,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stack) =>
+                                                    Container(
+                                                      color: Colors.grey[200],
+                                                      child: Icon(
+                                                        Icons.school,
+                                                        size: 48,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: 0,
+                                          right: 0,
+                                          bottom: 0,
+                                          child: Container(
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Colors.transparent,
+                                                  Colors.black26,
+                                                ],
+                                              ),
+                                            ),
+                                            child: Text(
+                                              c.title,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            c.instructor,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[700],
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[200],
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '${c.credits} cr',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -303,6 +460,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     );
   }
 
+  /// Small chip used to display metadata like credits or rating.
   Widget _buildInfoChip(String text, IconData icon) {
     return Chip(
       avatar: Icon(icon, size: 16),
@@ -311,6 +469,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     );
   }
 
+  /// Row showing a single learning outcome point.
   Widget _buildLearningPoint(String text) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 6),
@@ -326,6 +485,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     );
   }
 
+  /// Labeled detail row used for course metadata (duration, difficulty, etc.).
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8),
@@ -339,6 +499,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     );
   }
 
+  /// Small card displaying a student review.
   Widget _buildReviewCard(String title, String content, String rating) {
     return Container(
       margin: EdgeInsets.only(bottom: 12),

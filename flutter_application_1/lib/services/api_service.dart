@@ -1,8 +1,17 @@
+// File: lib/services/api_service.dart
+// Simple API helpers (mocked) used by the app for demo and testing.
+
 import '../models/course.dart';
 
+/// Service that provides course data.
+///
+/// This is a lightweight mocked implementation that simulates
+/// network delay and returns example `Course` instances.
 class ApiService {
-  // Simple mock fetcher for demo purposes
+  /// Fetches a list of courses.
+  /// Simulates a short network latency to mimic a real API call.
   Future<List<Course>> fetchCourses() async {
+    // Simulated network delay
     await Future.delayed(Duration(milliseconds: 300));
     return [
       Course(

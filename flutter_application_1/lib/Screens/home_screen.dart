@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import '../models/course.dart';
-import '../services/database_service.dart';
+import '../services/hive_service.dart';
 import '../widgets/course_card.dart';
 import 'course_details_screen.dart';
 import 'profile_screen.dart';
 import 'schedule_screen.dart';
 
+/// Home screen showing featured courses and search.
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final DatabaseService _db = DatabaseService();
+  // Use Hive-backed service for data persistence
+  final HiveService _db = HiveService();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
+  /// Ensures the DB has seed course data for the demo UI.
   Future<void> _ensureSeedData() async {
     final courses = await _db.getCourses();
     if (courses.isEmpty) {
@@ -26,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Learn the fundamentals of programming, algorithms, and problem-solving.',
           instructor: 'Dr. Sarah Smith',
           imageUrl:
-              'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400',
+              'https://images.unsplash.com/photo-1517433456452-f9633a875f6f?w=800',
           credits: 3,
         ),
         Course(
@@ -35,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Master data structures and optimize algorithms for better software.',
           instructor: 'Prof. Michael Johnson',
           imageUrl:
-              'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400',
+              'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800',
           credits: 4,
         ),
         Course(
@@ -44,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Build responsive web applications using HTML, CSS, JavaScript, and React.',
           instructor: 'Dr. Emily Chen',
           imageUrl:
-              'https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=400',
+              'https://images.unsplash.com/photo-1520975909142-2b3f4d4b7d6e?w=800',
           credits: 4,
         ),
         Course(
@@ -53,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Design and manage databases using SQL and NoSQL technologies.',
           instructor: 'Prof. James Wilson',
           imageUrl:
-              'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=400',
+              'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800',
           credits: 3,
         ),
         Course(
@@ -62,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Create mobile applications with Flutter and modern frameworks.',
           instructor: 'Dr. Lisa Rodriguez',
           imageUrl:
-              'https://images.unsplash.com/photo-1512941691920-25bda36fda6d?w=400',
+              'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
           credits: 4,
         ),
         Course(
@@ -71,7 +74,61 @@ class _HomeScreenState extends State<HomeScreen> {
               'Deploy and manage applications on AWS, Google Cloud, and Azure.',
           instructor: 'Prof. David Brown',
           imageUrl:
-              'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400',
+              'https://images.unsplash.com/photo-1504805572947-34fad45aed93?w=800',
+          credits: 3,
+        ),
+        Course(
+          title: 'Artificial Intelligence',
+          description:
+              'Explore machine learning models, neural networks, and AI ethics.',
+          instructor: 'Dr. Alan Turing',
+          imageUrl:
+              'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800',
+          credits: 4,
+        ),
+        Course(
+          title: 'Human-Computer Interaction',
+          description:
+              'Design usable interfaces and learn user research techniques.',
+          instructor: 'Prof. Karen Miller',
+          imageUrl:
+              'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800',
+          credits: 3,
+        ),
+        Course(
+          title: 'Cybersecurity Basics',
+          description:
+              'Learn the fundamentals of securing systems and networks.',
+          instructor: 'Dr. Samuel Lee',
+          imageUrl:
+              'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
+          credits: 3,
+        ),
+        Course(
+          title: 'Data Visualization',
+          description:
+              'Turn data into insights using charts, dashboards, and storytelling.',
+          instructor: 'Dr. Ana Gomez',
+          imageUrl:
+              'https://images.unsplash.com/photo-1500856056008-859079534e9e?w=800',
+          credits: 3,
+        ),
+        Course(
+          title: 'Game Development',
+          description:
+              'Build interactive games using Unity and modern game engines.',
+          instructor: 'Prof. Marcus Wright',
+          imageUrl:
+              'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800',
+          credits: 4,
+        ),
+        Course(
+          title: 'Software Engineering Practices',
+          description:
+              'Study software lifecycle, testing, CI/CD, and team workflows.',
+          instructor: 'Dr. Olivia Park',
+          imageUrl:
+              'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800',
           credits: 3,
         ),
       ];
@@ -188,6 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   }
 
                   final courses = snapshot.data!;
+                  // Apply simple text filter over title, instructor and description
                   final filtered = courses.where((c) {
                     if (_searchQuery.isEmpty) return true;
                     final s = '${c.title} ${c.instructor} ${c.description}'
@@ -209,7 +267,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               final c = courses[i];
                               return Padding(
                                 padding: EdgeInsets.only(right: 12),
-                                child: GestureDetector(
+                                child: CourseCard(
+                                  course: c,
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -217,7 +276,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                           CourseDetailsScreen(course: c),
                                     ),
                                   ),
-                                  child: CourseCard(course: c, onTap: () {}),
                                 ),
                               );
                             },
@@ -279,6 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Small chip used for category filtering (UI placeholder).
   Widget _buildCategoryChip(String label, IconData icon) {
     return ActionChip(
       avatar: Icon(icon, size: 16, color: Colors.white70),

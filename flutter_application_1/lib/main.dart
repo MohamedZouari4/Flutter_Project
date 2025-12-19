@@ -1,11 +1,21 @@
+// Main entry point and app configuration for the Superior University Flutter app.
+// Contains theme setup and initial route (SplashScreen).
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'Screens/splash_screen.dart';
+import 'services/hive_service.dart';
 
-void main() {
+// Launches the Superior University application.
+// Initialize local services (Hive) before running the app.
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await HiveService().init();
+  // Attempt automatic migration from existing sqflite DB if present
+  await HiveService().migrateFromSqflite();
   runApp(SuperiorUniversityApp());
 }
 
+// Root widget that configures the MaterialApp theme and home screen.
 class SuperiorUniversityApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

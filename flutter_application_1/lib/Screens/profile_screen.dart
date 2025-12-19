@@ -1,7 +1,13 @@
+// File: lib/Screens/profile_screen.dart
+// User profile view and settings page.
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/hive_service.dart';
+import '../models/user.dart';
 import 'login_screen.dart';
 
+/// Displays basic user profile information stored locally.
 class ProfileScreen extends StatefulWidget {
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -9,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
+  User? _user;
 
   @override
   void initState() {
@@ -16,14 +23,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUser();
   }
 
+  /// Loads saved user info from SharedPreferences.
+  /// Loads user values from SharedPreferences into state for display.
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('userEmail');
+    if (email == null) return;
+
+    // Load persistent user record from Hive if available
+    final user = await HiveService().findUserByEmail(email);
+
     if (!mounted) return;
     setState(() {
-      _email = prefs.getString('userEmail') ?? 'student@university.edu';
+      _email = email;
+      _user = user;
     });
   }
 
+  /// Clears session data and navigates back to the login screen.
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
@@ -143,10 +160,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               SizedBox(height: 12),
 
-              _buildInfoTile('Student ID', '2024001', Icons.badge),
-              _buildInfoTile('Major', 'Computer Science', Icons.school),
-              _buildInfoTile('Year', 'Junior', Icons.calendar_today),
-              _buildInfoTile('Phone', '+1 (555) 000-0000', Icons.phone),
+              _buildInfoTile(
+                'Student ID',
+                _user?.studentId ?? '2024001',
+                Icons.badge,
+              ),
+              _buildInfoTile(
+                'Major',
+                _user?.major ?? 'Computer Science',
+                Icons.school,
+              ),
+              _buildInfoTile(
+                'Year',
+                _user?.year ?? 'Junior',
+                Icons.calendar_today,
+              ),
+              _buildInfoTile(
+                'Phone',
+                _user?.phone ?? '+1 (555) 000-0000',
+                Icons.phone,
+              ),
 
               SizedBox(height: 24),
 
@@ -212,6 +245,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Small stat card used in the profile view to show metrics like courses/credits/GPA.
   Widget _buildStatCard(String value, String label, Color color) {
     return Container(
       padding: EdgeInsets.all(16),
@@ -237,6 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Reusable row showing a labeled piece of account information with an icon.
   Widget _buildInfoTile(String label, String value, IconData icon) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8),

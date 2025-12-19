@@ -1,7 +1,13 @@
+// File: lib/Screens/register_screen.dart
+// Registration screen where a user can create a local demo account.
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/hive_service.dart';
+import '../models/user.dart';
 import 'home_screen.dart';
 
+/// Form for creating a local demo account (stored in SharedPreferences).
 class RegisterScreen extends StatefulWidget {
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
@@ -20,30 +26,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   bool _obscureConfirm = true;
 
+  /// Validates the registration form and saves user info to SharedPreferences.
+  /// On success, navigates to the `HomeScreen`.
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isLoggedIn', true);
-      await prefs.setString('userEmail', _emailController.text);
-      await prefs.setString('userName', _nameController.text);
-      await prefs.setString('studentId', _studentIdController.text);
-      await prefs.setString('major', _selectedMajor ?? 'Undeclared');
-      await prefs.setString('year', _selectedYear);
-      await prefs.setString('phone', _phoneController.text);
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Welcome, ${_nameController.text}!'),
-          duration: Duration(seconds: 2),
-        ),
+      final user = User(
+        name: _nameController.text,
+        email: _emailController.text,
+        studentId: _studentIdController.text,
+        password: _passwordController.text,
+        major: _selectedMajor ?? 'Undeclared',
+        year: _selectedYear,
+        phone: _phoneController.text,
       );
 
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
+      try {
+        await HiveService().createUser(user);
+
+        // Keep session flag in SharedPreferences (simple approach)
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('userEmail', user.email);
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome, ${user.name}!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration failed: ${e.toString()}'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 

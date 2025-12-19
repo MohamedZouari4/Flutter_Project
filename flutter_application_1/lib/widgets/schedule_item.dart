@@ -1,11 +1,16 @@
+// File: lib/widgets/schedule_item.dart
+// Small widget that renders a schedule row with colored indicator.
+
 import 'package:flutter/material.dart';
 import '../models/schedule.dart';
 
+/// A single schedule list item representing a class session.
 class ScheduleItem extends StatelessWidget {
   final Schedule schedule;
 
   const ScheduleItem({Key? key, required this.schedule}) : super(key: key);
 
+  /// Converts a hex string like '#FF7043' to a [Color] object.
   Color _hexToColor(String hex) {
     hex = hex.replaceFirst('#', '');
     if (hex.length == 6) hex = 'FF$hex';

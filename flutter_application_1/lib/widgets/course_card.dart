@@ -1,7 +1,11 @@
+// File: lib/widgets/course_card.dart
+// Reusable card used across the app to preview course information.
+
 import 'package:flutter/material.dart';
 import '../models/course.dart';
 import '../utils/colors.dart';
 
+/// Card widget that displays course thumbnail, title and meta info.
 class CourseCard extends StatelessWidget {
   final Course course;
   final VoidCallback? onTap;
@@ -17,8 +21,12 @@ class CourseCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
+          // Ensure the card has a reasonable minimum height so children (like AspectRatio)
+          // can compute their size when placed in unbounded vertical space (e.g. ListView items).
+          constraints: BoxConstraints(minHeight: 96),
           decoration: BoxDecoration(gradient: AppColors.cardGradient),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               AspectRatio(
                 aspectRatio: 1,
