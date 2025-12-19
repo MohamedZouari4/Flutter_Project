@@ -97,10 +97,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Icon(Icons.person_add, color: Colors.white, size: 32),
                 ),
                 SizedBox(height: 24),
-                Text(
-                  'Create Account',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'Create',
+                        style: TextStyle(color: Colors.amberAccent),
+                      ),
+                      TextSpan(text: ' Account'),
+                    ],
                   ),
                 ),
                 SizedBox(height: 8),
@@ -296,11 +305,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: primary,
                     ),
-                    child: Text(
-                      'Create Account',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Create',
+                            style: TextStyle(color: Colors.amberAccent),
+                          ),
+                          TextSpan(text: ' Account'),
+                        ],
                       ),
                     ),
                   ),

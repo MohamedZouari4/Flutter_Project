@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/course.dart';
 import '../services/hive_service.dart';
-import '../widgets/course_card.dart';
 
 /// Details screen for a single [Course].
 class CourseDetailsScreen extends StatefulWidget {
@@ -18,13 +17,16 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   bool _isSaved = false;
   // Use Hive-backed service for data persistence
   final HiveService _db = HiveService();
-  List<Course> _related = [];
 
   @override
   void initState() {
     super.initState();
     _loadRelated();
+    _isEnrolled = widget.course.isEnrolled;
+    _isSaved = widget.course.isSaved;
   }
+
+  List<Course> _related = [];
 
   /// Loads related courses from the database excluding the current one.
   Future<void> _loadRelated() async {
@@ -54,7 +56,14 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
           ),
           IconButton(
             icon: Icon(_isSaved ? Icons.bookmark : Icons.bookmark_border),
-            onPressed: () => setState(() => _isSaved = !_isSaved),
+            onPressed: () async {
+              final newSaved = !_isSaved;
+              setState(() => _isSaved = newSaved);
+              await _db.setCourseSaved(widget.course, newSaved);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(newSaved ? 'Saved' : 'Removed')),
+              );
+            },
           ),
         ],
       ),
@@ -237,9 +246,12 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Toggle enrollment state and show a confirmation toast
-                        setState(() => _isEnrolled = !_isEnrolled);
+                      onPressed: () async {
+                        // Toggle enrollment state and persist
+                        final newState = !_isEnrolled;
+                        setState(() => _isEnrolled = newState);
+                        await _db.setCourseEnrollment(widget.course, newState);
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(

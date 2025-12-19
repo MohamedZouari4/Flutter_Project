@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import '../models/course.dart';
 import '../services/hive_service.dart';
 import '../widgets/course_card.dart';
@@ -234,17 +235,14 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: 16),
 
             Expanded(
-              child: FutureBuilder<List<Course>>(
-                future: _db.getCourses(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              child: ValueListenableBuilder<Box<Course>>(
+                valueListenable: Hive.box<Course>('courses').listenable(),
+                builder: (context, box, _) {
+                  final courses = box.values.toList();
+                  if (courses.isEmpty) {
                     return Center(child: Text('No courses available'));
                   }
 
-                  final courses = snapshot.data!;
                   // Apply simple text filter over title, instructor and description
                   final filtered = courses.where((c) {
                     if (_searchQuery.isEmpty) return true;
@@ -253,9 +251,287 @@ class _HomeScreenState extends State<HomeScreen> {
                     return s.contains(_searchQuery);
                   }).toList();
 
+                  final saved = courses.where((c) => c.isSaved).toList();
+                  final enrolled = courses.where((c) => c.isEnrolled).toList();
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Saved courses
+                      if (saved.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Saved Courses',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Manage saved not implemented',
+                                        ),
+                                      ),
+                                    ),
+                                child: Text('Manage'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        SizedBox(
+                          height: 120,
+                          child: ListView.separated(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: saved.length,
+                            separatorBuilder: (_, __) => SizedBox(width: 12),
+                            itemBuilder: (context, idx) {
+                              final c = saved[idx];
+                              return SizedBox(
+                                width: 260,
+                                child: GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          CourseDetailsScreen(course: c),
+                                    ),
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: Colors.white,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                    ),
+                                    clipBehavior: Clip.hardEdge,
+                                    child: Row(
+                                      children: [
+                                        AspectRatio(
+                                          aspectRatio: 1,
+                                          child: Image.network(
+                                            c.imageUrl,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, e, s) =>
+                                                Container(
+                                                  color: Colors.grey[200],
+                                                  child: Icon(Icons.school),
+                                                ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Text(
+                                                        c.title,
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: 6),
+                                                      Text(
+                                                        c.instructor,
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color:
+                                                              Colors.grey[700],
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  onPressed: () async {
+                                                    await _db.setCourseSaved(
+                                                      c,
+                                                      false,
+                                                    );
+                                                  },
+                                                  icon: Icon(
+                                                    Icons.bookmark_remove,
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                      ],
+
+                      // Enrolled courses
+                      if (enrolled.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Enrolled Courses',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Manage not implemented'),
+                                      ),
+                                    ),
+                                child: Text('Manage'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        SizedBox(
+                          height: 120,
+                          child: ListView.separated(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: enrolled.length,
+                            separatorBuilder: (_, __) => SizedBox(width: 12),
+                            itemBuilder: (context, idx) {
+                              final c = enrolled[idx];
+                              return SizedBox(
+                                width: 260,
+                                child: GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          CourseDetailsScreen(course: c),
+                                    ),
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: Colors.white,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                    ),
+                                    clipBehavior: Clip.hardEdge,
+                                    child: Row(
+                                      children: [
+                                        AspectRatio(
+                                          aspectRatio: 1,
+                                          child: Image.network(
+                                            c.imageUrl,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, e, s) =>
+                                                Container(
+                                                  color: Colors.grey[200],
+                                                  child: Icon(Icons.school),
+                                                ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Text(
+                                                        c.title,
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: 6),
+                                                      Text(
+                                                        c.instructor,
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color:
+                                                              Colors.grey[700],
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  onPressed: () async {
+                                                    await _db
+                                                        .setCourseEnrollment(
+                                                          c,
+                                                          false,
+                                                        );
+                                                  },
+                                                  icon: Icon(
+                                                    Icons.remove_circle_outline,
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                      ],
+
                       // Featured carousel
                       if (courses.isNotEmpty) ...[
                         SizedBox(

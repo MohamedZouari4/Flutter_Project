@@ -24,6 +24,12 @@ class Course {
   @HiveField(5)
   final int credits;
 
+  @HiveField(6)
+  final bool isEnrolled;
+
+  @HiveField(7)
+  final bool isSaved;
+
   Course({
     this.id,
     required this.title,
@@ -31,6 +37,8 @@ class Course {
     required this.instructor,
     required this.imageUrl,
     required this.credits,
+    this.isEnrolled = false,
+    this.isSaved = false,
   });
 
   /// Convert to map for DB storage.
@@ -42,6 +50,8 @@ class Course {
       'instructor': instructor,
       'imageUrl': imageUrl,
       'credits': credits,
+      'isEnrolled': isEnrolled ? 1 : 0,
+      'isSaved': isSaved ? 1 : 0,
     };
   }
 
@@ -54,6 +64,12 @@ class Course {
       instructor: map['instructor'],
       imageUrl: map['imageUrl'],
       credits: map['credits'],
+      isEnrolled: (map['isEnrolled'] == null)
+          ? false
+          : (map['isEnrolled'] == 1 || map['isEnrolled'] == true),
+      isSaved: (map['isSaved'] == null)
+          ? false
+          : (map['isSaved'] == 1 || map['isSaved'] == true),
     );
   }
 }
@@ -78,13 +94,15 @@ class CourseAdapter extends TypeAdapter<Course> {
       instructor: fields[3] as String,
       imageUrl: fields[4] as String,
       credits: fields[5] as int,
+      isEnrolled: (fields[6] as bool?) ?? false,
+      isSaved: (fields[7] as bool?) ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, Course obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -96,6 +114,10 @@ class CourseAdapter extends TypeAdapter<Course> {
       ..writeByte(4)
       ..write(obj.imageUrl)
       ..writeByte(5)
-      ..write(obj.credits);
+      ..write(obj.credits)
+      ..writeByte(6)
+      ..write(obj.isEnrolled)
+      ..writeByte(7)
+      ..write(obj.isSaved);
   }
 }

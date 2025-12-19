@@ -196,11 +196,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: primary,
                     ),
-                    child: Text(
-                      'Sign In',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Sign',
+                            style: TextStyle(color: Colors.amberAccent),
+                          ),
+                          TextSpan(text: ' In'),
+                        ],
                       ),
                     ),
                   ),
@@ -264,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'Sign Up',
                         style: TextStyle(
-                          color: primary,
+                          color: Colors.amberAccent,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

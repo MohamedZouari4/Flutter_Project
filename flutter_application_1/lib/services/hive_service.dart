@@ -87,6 +87,66 @@ class HiveService {
     return box.values.toList();
   }
 
+  /// Returns only enrolled courses.
+  Future<List<Course>> getEnrolledCourses() async {
+    final box = Hive.box<Course>(_coursesBox);
+    return box.values.where((c) => c.isEnrolled).toList();
+  }
+
+  /// Returns only saved/bookmarked courses.
+  Future<List<Course>> getSavedCourses() async {
+    final box = Hive.box<Course>(_coursesBox);
+    return box.values.where((c) => c.isSaved).toList();
+  }
+
+  /// Sets enrollment flag for a [course] and persists it.
+  Future<void> setCourseEnrollment(Course course, bool enrolled) async {
+    final box = Hive.box<Course>(_coursesBox);
+    for (final k in box.keys) {
+      final c = box.get(k);
+      if (c != null &&
+          c.title == course.title &&
+          c.instructor == course.instructor) {
+        final updated = Course(
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          instructor: c.instructor,
+          imageUrl: c.imageUrl,
+          credits: c.credits,
+          isEnrolled: enrolled,
+          isSaved: c.isSaved,
+        );
+        await box.put(k, updated);
+        return;
+      }
+    }
+  }
+
+  /// Sets saved/bookmark flag for a [course] and persists it.
+  Future<void> setCourseSaved(Course course, bool saved) async {
+    final box = Hive.box<Course>(_coursesBox);
+    for (final k in box.keys) {
+      final c = box.get(k);
+      if (c != null &&
+          c.title == course.title &&
+          c.instructor == course.instructor) {
+        final updated = Course(
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          instructor: c.instructor,
+          imageUrl: c.imageUrl,
+          credits: c.credits,
+          isEnrolled: c.isEnrolled,
+          isSaved: saved,
+        );
+        await box.put(k, updated);
+        return;
+      }
+    }
+  }
+
   // Schedule operations
   Future<int> insertSchedule(Schedule schedule) async {
     final box = Hive.box<Schedule>(_schedulesBox);
