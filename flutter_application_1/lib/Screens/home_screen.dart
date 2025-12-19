@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/course.dart';
 import '../services/hive_service.dart';
 import '../widgets/course_card.dart';
@@ -579,29 +580,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(height: 12),
 
-                      // Course list
-                      Expanded(
-                        child: ListView.separated(
-                          padding: EdgeInsets.zero,
-                          itemCount: filtered.length,
-                          separatorBuilder: (_, __) => SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final course = filtered[index];
-                            return CourseCard(
-                              course: course,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        CourseDetailsScreen(course: course),
-                                  ),
-                                );
-                              },
+                      // Course list (flattened into parent scrollable)
+                      for (var course in filtered) ...[
+                        CourseCard(
+                          course: course,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CourseDetailsScreen(course: course),
+                              ),
                             );
                           },
                         ),
-                      ),
+                        SizedBox(height: 12),
+                      ],
                     ],
                   );
                 },
